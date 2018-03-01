@@ -1,11 +1,51 @@
 <!DOCTYPE html>
-  <html>
-    <head>
-      <meta charset="UTF-8">
-      <title>E-cattle Manager</title>
-    </head>
-    <body>
-      <h1>E-cattle Manager</h1>
-      
-    </body>
-  </html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>E-cattle Manager</title>
+    
+    <!--Import Google Icon Font-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="node_modules/materialize-css/dist/css/materialize.min.css"  media="screen,projection"/>
+    
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="node_modules/materialize-css/dist/js/materialize.min.js"></script>
+    
+    <script src="controller/main.controller.js"></script>
+</head>
+<body onload="mainController.getAllDevices()">
+    
+    <nav class="nav-extended blue">
+        <div class="nav-wrapper">
+            <a href="#!" class="brand-logo">E-cattle Manager</a>
+            <ul class="right hide-on-med-and-down">
+                <li><a>Dispositivos</a></li>
+            </ul>
+        </div>
+        <div class="nav-content center">
+            <span class="nav-title">Dispositivos</span>
+            <a class="btn-floating btn-large halfway-fab waves-effect waves-light teal">
+                <i class="material-icons">add</i>
+            </a>
+        </div>
+    </nav>
+    
+    <main class="container">
+        <table class="col s12 striped" id="deviceTable" border="1">
+            <thead>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Marca</th>
+                <th>Modelo</th>
+                <th>Versão</th>
+                <th>MAC</th>
+                <th>Ativo</th>
+            </thead>
+            <tbody>
+                
+            </tbody>
+        </table>
+    </main>
+</body>
+</html>
