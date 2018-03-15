@@ -5,12 +5,14 @@
   "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./node_modules/.bin/electron main.js"
+    "start": "./node_modules/.bin/electron main.js",
+    "web": "./node_modules/.bin/lite-server"
   },
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "electron": "^1.8.2"
+    "electron": "^1.8.2",
+    "lite-server": "^2.3.0"
   },
   "dependencies": {
     "materialize-css": "^0.100.2"
