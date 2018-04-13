@@ -46,12 +46,15 @@ export default {
     hideError(){
       this.error = {show: false, message: "", icon: ""}
     },
+    //Recupera MAC da API-Kernel
     async getMacAddress(){
       return await this.$http.get(this.$store.kernelHost + 'info/macaddress')
     },
-    async syncDevices(){
+    //Faz Sincronismo dos Devices com API-Application
+    async syncDevices(){ 
       this.message += "Fazendo backup dos dispositivos...<br>"          
       try{
+        //Todos dispositivos não sincronizados
         let response = await this.$http.get(this.$store.kernelHost + 'devices/sync')
         if(!response.data) {
           return this.message += "Falha ao sincronizar dispositivos" 
@@ -61,10 +64,14 @@ export default {
           if(devices.length <= 0) { this.message += "Todos os dispositivos sincronizados.<br>"; this.isSyncing = false }
           for (let i = 0; i < devices.length; i++) {
             let device = devices[i];
+            //Vincula cada device com seu Kernel pelo Mac 
             device.kernelMac = this.macaddress;
             this.message += `Enviando dispositivo: <strong>${device.name}</strong>...<br>`
+            //Post para API application, recebe  a data de sincronismo como resposta
             let response = await this.$http.post(`${this.apiProtocol}${this.apiAddress}devices-sync/`,  { token: this.token, device: device, kernelMac: this.macaddress })
+            
             if(!response.data.syncedAt) this.message += "Erro ao sincronizar dispositivo.<br>"
+            //Altera o status do device apra  para sincronizado
             else this.$http.get(`${this.$store.kernelHost}devices/synced/${device.mac}`)
           }
           return;
