@@ -24,9 +24,15 @@
             </v-list-tile-content>
           </v-list-tile>
         </v-list>
+
+        <p class="text-xs-center" style="position: absolute; bottom: 16px;">
+          <img src="../../static/embrapa-ufms.png" style="width: 90%;" />
+        </p>
+
       </v-navigation-drawer>
       <v-toolbar fixed app :clipped-left="clipped">
         <v-toolbar-side-icon @click.native.stop="drawer = !drawer"></v-toolbar-side-icon>
+        <v-toolbar-title v-text="$route.name"></v-toolbar-title>
         <!-- <v-btn 
           icon
           @click.native.stop="miniVariant = !miniVariant"
@@ -79,7 +85,7 @@
       </v-navigation-drawer>
       <v-footer :fixed="fixed" app>
         <v-spacer></v-spacer>
-        <span>&copy; {{new Date().getFullYear()}}</span>
+        <span>&copy; {{ new Date().getFullYear() }}</span>
       </v-footer>
     </v-app>
   </div>
@@ -94,6 +100,7 @@
       fixed: false,
       items: [
         { icon: 'mdi-home', title: 'Início', to: '/' },
+        { icon: 'mdi-gauge', title: 'Painel de Controle', to: '/dashboard' },
         { icon: 'mdi-settings-outline', title: 'Configuração', to: '/config' },
         { icon: 'mdi-router-wireless', title: 'Dispositivos', to: '/device' },
         { icon: 'sync', title: 'Sincronização', to: '/sync' }

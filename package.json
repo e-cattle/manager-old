@@ -25,8 +25,10 @@
   },
   "dependencies": {
     "axios": "^0.16.1",
+    "chart.js": "^2.7.2",
     "mdi": "^2.2.43",
     "vue": "^2.4.2",
+    "vue-chartjs": "^3.3.1",
     "vue-electron": "^1.0.6",
     "vue-localstorage": "^0.6.2",
     "vue-router": "^2.5.3",
