@@ -1,13 +1,13 @@
 <template>
   <v-layout row wrap justify-center id="wrapper">
     <v-flex xs12 class="text-xs-center centered">
-      <h1 class="text-xs-center display-3">Kernel Manager</h1>
+      <h1 class="text-xs-center display-3">e-Cattle Manager</h1>
     </v-flex>
     <v-flex xs10 class="mt-3">
       <v-card>
         <v-card-text>
-          <p>Bem-vindo ao E-cattle Kernel Manager.</p>
-          <p>Esta plataforma tem o objetivo de gerenciar o <strong>kernel</strong> de uma fazenda, bem como os dispositivos vinculados e os dados sensoriais.</p>
+          <p>Bem-vindo ao <i>e-Cattle Manager</i>.</p>
+          <p>Por aqui você pode gerenciar a rede de <strong>objetos inteligentes</strong> da sua fazenda, bem como os dispositivos vinculados e os dados coletados.</p>
         </v-card-text>
         <v-card-actions>
           <v-spacer></v-spacer>
