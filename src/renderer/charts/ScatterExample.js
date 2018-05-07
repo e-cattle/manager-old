@@ -48,6 +48,27 @@ export default {
           y: -4
         }]
       }]
-    }, {responsive: true, maintainAspectRatio: false})
+    }, 
+    {
+      responsive: true, 
+      maintainAspectRatio: false,
+      legend: {
+        labels: {
+          fontColor: '#ffffff'
+        }
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            fontColor: '#fff'
+          },
+        }],
+        xAxes: [{
+          ticks: {
+            fontColor: '#fff'
+          },
+        }]
+      }
+    })
   }
 }

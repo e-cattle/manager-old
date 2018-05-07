@@ -4,7 +4,7 @@ export default {
   extends: Pie,
   mounted () {
     this.renderChart({
-      labels: ['VueJs', 'EmberJs', 'ReactJs', 'AngularJs'],
+      labels: ['Fisiológicos', 'Comportamentais', 'Micro-Clima', 'Contextuais'],
       datasets: [
         {
           backgroundColor: [
@@ -13,9 +13,18 @@ export default {
             '#00D8FF',
             '#DD1B16'
           ],
-          data: [40, 20, 80, 10]
+          data: [348932, 25435, 123456, 12345]
         }
       ]
-    }, {responsive: true, maintainAspectRatio: false})
+    },
+    {
+      responsive: true, 
+      maintainAspectRatio: false,
+      legend: {
+        labels: {
+          fontColor: '#ffffff'
+        }
+      }
+    })
   }
 }

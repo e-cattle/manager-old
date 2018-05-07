@@ -8,6 +8,11 @@
         v-model="drawer"
         app
       >
+
+        <p class="text-xs-center my-0 py-3" style="background-color: #111;">
+          <img src="../../static/bigbox.png" style="width: 100%;" />
+        </p>
+
         <v-list>
           <v-list-tile 
             router
@@ -25,7 +30,7 @@
           </v-list-tile>
         </v-list>
 
-        <p class="text-xs-center" style="position: absolute; bottom: 16px;">
+        <p class="text-xs-center" style="position: absolute; bottom: 0px;">
           <img src="../../static/embrapa-ufms.png" style="width: 90%;" />
         </p>
 
@@ -83,10 +88,6 @@
           </v-list-tile>
         </v-list>
       </v-navigation-drawer>
-      <v-footer :fixed="fixed" app>
-        <v-spacer></v-spacer>
-        <span>&copy; {{ new Date().getFullYear() }}</span>
-      </v-footer>
     </v-app>
   </div>
 </template>
@@ -103,7 +104,8 @@
         { icon: 'mdi-gauge', title: 'Painel de Controle', to: '/dashboard' },
         { icon: 'mdi-settings-outline', title: 'Configuração', to: '/config' },
         { icon: 'mdi-router-wireless', title: 'Dispositivos', to: '/device' },
-        { icon: 'sync', title: 'Sincronização', to: '/sync' }
+        { icon: 'sync', title: 'Sincronização', to: '/sync' },
+        { icon: 'info', title: 'Sobre', to: '/about' }
       ],
       miniVariant: false,
       right: true,

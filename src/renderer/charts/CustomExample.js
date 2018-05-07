@@ -32,10 +32,10 @@ export default {
   extends: LineWithLine,
   mounted () {
     this.renderChart({
-      labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July'],
+      labels: ['30/4', '1/5', '2/5', '3/5', '4/5', '5/5', '6/5'],
       datasets: [
         {
-          label: 'Data One',
+          label: 'Dados Enviados (em quantidade)',
           backgroundColor: '#f87979',
           data: [40, 39, 10, 40, 39, 80, 40]
         }
@@ -45,6 +45,23 @@ export default {
       maintainAspectRatio: false,
       tooltips: {
         intersect: false
+      },
+      legend: {
+        labels: {
+          fontColor: '#ffffff'
+        }
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            fontColor: '#fff'
+          },
+        }],
+        xAxes: [{
+          ticks: {
+            fontColor: '#fff'
+          },
+        }]
       }
     })
   }

@@ -4,18 +4,25 @@ export default {
   extends: Doughnut,
   mounted () {
     this.renderChart({
-      labels: ['VueJs', 'EmberJs', 'ReactJs', 'AngularJs'],
+      labels: ['Espaço Ocupado', 'Espaço Disponível'],
       datasets: [
         {
           backgroundColor: [
-            '#41B883',
-            '#E46651',
-            '#00D8FF',
-            '#DD1B16'
+            '#DD1B16',
+            '#41B883'
           ],
-          data: [40, 20, 80, 10]
+          data: [67, 33]
         }
       ]
-    }, {responsive: true, maintainAspectRatio: false})
+    },
+    {
+      responsive: true, 
+      maintainAspectRatio: false,
+      legend: {
+        labels: {
+          fontColor: '#ffffff'
+        }
+      }
+    })
   }
 }

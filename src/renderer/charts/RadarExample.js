@@ -27,6 +27,27 @@ export default {
           data: [28, 48, 40, 19, 96, 27, 100]
         }
       ]
-    }, {responsive: true, maintainAspectRatio: false})
+    }, 
+    {
+      responsive: true, 
+      maintainAspectRatio: false,
+      legend: {
+        labels: {
+          fontColor: '#ffffff'
+        }
+      },
+      scales: {
+        yAxes: [{
+          ticks: {
+            fontColor: '#fff'
+          },
+        }],
+        xAxes: [{
+          ticks: {
+            fontColor: '#fff'
+          },
+        }]
+      }
+    })
   }
 }

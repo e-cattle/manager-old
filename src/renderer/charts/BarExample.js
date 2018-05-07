@@ -4,11 +4,11 @@ export default {
   extends: Bar,
   mounted () {
     this.renderChart({
-      labels: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
+      labels: ['Jun/17', 'Jul/17', 'Ago/17', 'Set/17', 'Out/17', 'Nov/17', 'Dez/17', 'Jan/18', 'Fev/18', 'Mar/18', 'Abr/18', 'Mai/18'],
       datasets: [
         {
-          label: 'Data One',
-          backgroundColor: '#f87979',
+          label: 'Dados Obtidos (em MB)',
+          backgroundColor: '#7979f8',
           data: [40, 20, 12, 39, 10, 40, 39, 80, 40, 20, 12, 11]
         }
       ]
