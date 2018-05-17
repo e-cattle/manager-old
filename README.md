@@ -2,6 +2,16 @@
 
 > Projeto para gerenciamento da aplicação e-Cattle
 
+## Setup do projeto
+Execute `npm install` no terminal, na pasta do projeto, para instalar as dependências.
+
+## Run em modo desenvolvimento
+Execute `npm run dev` no terminal na pasto do projeto para que o projeto seja executado em modo desenvolvimento.
+
+## Build do E-cattle Manager no Rapberry
+
+Execute `npm run build:linux` para gerar o build de produção para linux. Após isso já até a pasta `dist/electron/` pelo terminal e exectute `./node_modules/.bin/electron index.html` para que o projeto seja executado.
+
 #### Build Setup
 
 ``` bash
