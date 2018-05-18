@@ -3,27 +3,33 @@
     <v-progress-linear :indeterminate="true"></v-progress-linear>
   </v-layout>
   <v-layout v-else row wrap justify-center id="wrapper">
-    <v-flex xs12 v-show="error.show">
-      <v-alert color="error" dismissible v-model="error.show" :icon="error.icon">
-        {{error.message}}
+    
+    <v-flex xs12 v-show="alert.show">
+      <v-alert :color="alert.color" dismissible v-model="alert.show" :icon="alert.icon">
+        {{alert.message}}
       </v-alert>
     </v-flex>
-    <v-flex xs10 class="mt-4">
-      <h1 class="text-xs-center headline">Configuração do Kernel</h1>
+    
+    <v-flex xs12 class="mt-4">
       <br>
        <v-card>
+        <v-btn flat icon v-show="!editingKernelDatas" @click="editKernelDatas()">
+          <v-icon>edit</v-icon>
+        </v-btn>
         <v-card-title class="headline">
           Dados do Kernel
         </v-card-title>
-        <h2 class="subheading pa-3">Endereço MAC do Kernel: {{macaddress}}</h2>  
-        <h2 class="subheading pa-3">Status da solicitação de registro: {{registerStatus}}</h2>  
-        <v-container fluid>
+        <div v-show="!editingKernelDatas">
+          <h2 class="subheading pa-3">Nome da fazenda: {{kernel.name}}</h2>  
+          <h2 class="subheading pa-3">Endereço MAC do Kernel: {{macaddress}}</h2>
+        </div> 
+        <v-container fluid v-show="editingKernelDatas">
           <v-layout row>
             <v-flex xs12 order-lg2>
               <v-card dark tile flat>
                 <v-text-field
-                  label="Nome do Kernel"
-                  v-model="kernelName"
+                  label="Nome da Fazenda"
+                  v-model="kernelEdit.name"
                   required
                   @change="hideSave = false">
                 </v-text-field>
@@ -34,27 +40,42 @@
             <v-flex xs12>
               <div class="text-xs-center">
                  <v-btn
-                  :loading="savingKernelDatas"
+                  :loading="saving"
                   @click="save()"
                   :disabled="hideSave"
                 >
                   Salvar
                 </v-btn>
+                <v-btn
+                  @click="cancel()"
+                >
+                  Cancelar
+                </v-btn>
               </div>
             </v-flex>
           </v-layout>
         </v-container>
-        <v-divider></v-divider>
+      </v-card>
+    </v-flex>
+
+    <v-flex  xs12 class="mt-4">
+      <v-card>
+        <v-btn flat icon v-show="!editingApiDatas" @click="editApiDatas()">
+          <v-icon>edit</v-icon>
+        </v-btn>
         <v-card-title class="headline">
           Endereço da nuvem
         </v-card-title>
-        <v-container fluid>
+        <div v-show="!editingApiDatas">
+          <h2 class="subheading pa-3">{{kernel.apiAddressProtocol}}{{kernel.apiAddress}}</h2>  
+        </div> 
+        <v-container fluid v-show="editingApiDatas">
           <v-layout row>
-            <v-flex xs6 order-lg2>
+            <v-flex xs6>
               <v-card dark tile flat>
                 <v-select
                     :items="protocolOptions"
-                    v-model="apiProtocol"
+                    v-model="kernelEdit.apiAddressProtocol"
                     label="Protocolo"
                     single-line>
                   </v-select>
@@ -64,10 +85,28 @@
               <v-card dark tile flat>
                 <v-text-field
                   label="Endereço"
-                  v-model="apiAddress"
+                  v-model="kernelEdit.apiAddress"
                   required>
                 </v-text-field>
               </v-card>
+            </v-flex>
+          </v-layout>
+          <v-layout row>
+            <v-flex xs12>
+              <div class="text-xs-center">
+                 <v-btn
+                  :loading="saving"
+                  @click="save()"
+                  :disabled="hideSave"
+                >
+                  Salvar
+                </v-btn>
+                <v-btn
+                  @click="cancel()"
+                >
+                  Cancelar
+                </v-btn>
+              </div>
             </v-flex>
           </v-layout>
           <v-layout row>
@@ -84,13 +123,29 @@
             </v-flex>
           </v-layout>
         </v-container>
+      </v-card>
+    </v-flex>
+
+    <v-flex xs12 class="mt-4">
+      <v-card>
         <v-card-title class="headline">
-          Token de acesso
+          Acesso a nuvem
         </v-card-title>
-        <v-container fluid>
+        <h2 class="subheading pa-3">Status da solicitação de registro: {{registerStatus}}</h2>  
+        <p class="pa-3 grey--text" style="text-align: justify;">
+          O Bigbox deve estar registrado e homologado na nuvem para que possa realizar 
+          a sincronização dos dados em nuvem. Caso este dispositivo ainda não esteja com o status de registro realizado 
+          então clique no botão "Solicitar Registro" para que a solicitação seja criada. Caso o dispositivo tenha uma 
+          solicitação em andamente porém ainda não homologada, então o dispositivo está sendo analisado pela equipe 
+          técnica e o mais breve possível será ativado. Caso contrário entre em contato com a equipe técnica 
+        </p>
+        <p class="pa-3 red" v-if="this.registerStatus == this.API_NOT_ONLINE">
+          ATENÇÃO: A nuvem está temporariamente indisponível. Isso não impede o funcionamento do Bigbox localmente, porém não será possível realizar a sincronização de dados.
+        </p>
+        <v-container fluid v-else>
           <v-layout row>
             <v-flex class="truncate-text" xs4>
-              <span v-if="token">{{tokenStatus}}</span>
+              <span v-if="kernel && kernel.token">{{tokenStatus}}</span>
               <span v-else>Este kernel ainda não possui token.</span>
             </v-flex>
           </v-layout>
@@ -118,6 +173,7 @@
         </v-container>
       </v-card>
     </v-flex>
+  
   </v-layout>
 </template>
 
@@ -126,11 +182,15 @@
     name: 'Config',
     data (){
       return {
-        notRegisteredMessage: 'Solicitação não realizada',
-        homologingMessage: 'Solicitação aguardando homologação',
-        homologedMessage: 'Homologado',    
-        token: '',
-        savingKernelDatas: false,
+       
+        NOT_REGISTERED: 'Solicitação não realizada',
+        API_NOT_ONLINE: 'Solicitação falhou, a nuvem pode estar temporariamente fora do ar.',
+        HOMOLOGING: 'Solicitação aguardando homologação',
+        HOMOLOGED: 'Homologado',    
+
+        saving: false,
+        editingKernelDatas: false,
+        editingApiDatas: false,
         hideSave: false,
         loadingPage: true,
         registerStatus: "",
@@ -143,52 +203,85 @@
         apiProtocol: "",
         apiAddress: "",
         protocolOptions: ["http://","https://"],
-        error: {show: false, icon: "", message: ""}
+        kernelEdit: {},
+        kernel: {},
+        alert: {show: false, icon: "", message: "", color: "error"}
       }
     },
     methods: {
-      canSendRegister(){
-        return this.registerStatus == this.notRegisteredMessage ? true : false
-      },
-      canGenerateToken(){
-        return this.registerStatus == this.homologedMessage && !this.token ? true : false
-      },
-      canRenewToken(){
-        return this.registerStatus == this.homologedMessage && this.token ? true : false
-      },
-      showError(errors, icon){
-        this.error = {show: true, message: errors, icon: icon}
+      showWarning(msg, icon){
+        this.alert = {show: true, message: msg, icon: icon||'mdi-alert', color: "warning"}
         window.scrollTo(0, 0)
       },
-      hideError(){
-        this.error = {show: false, message: "", icon: ""}
+      hideAlert(){
+        this.alert = {show: false, message: "", icon: ""}
       },
-      save(){
-        this.savingKernelDatas = true;
-        this.$localStorage.set('kernelName', this.kernelName);
+
+      canSendRegister(){
+        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.NOT_REGISTERED ? true : false
+      },
+      canGenerateToken(){
+        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && !this.token ? true : false
+      },
+      canRenewToken(){
+        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && this.token ? true : false
+      },
+      showError(errors, icon){
+        this.alert = {show: true, message: errors, icon: icon||'mdi-alert'}
+        window.scrollTo(0, 0)
+      },
+      
+      editKernelDatas(){
+        this.cancel();
+        this.edit();
+        this.editingKernelDatas = true;
+      },
+      editApiDatas(){
+        this.cancel();
+        this.edit();
+        this.editingApiDatas = true;
+      },
+      edit(){
+        this.kernelEdit._id = this.kernel._id;
+        this.kernelEdit.name = this.kernel.name;
+        this.kernelEdit.apiAddressProtocol = this.kernel.apiAddressProtocol;
+        this.kernelEdit.apiAddress = this.kernel.apiAddress;
+      },
+      cancel(){
+        this.editingKernelDatas = false;
+        this.editingApiDatas = false;
+      },
+      async save(){
+        this.saving = true;
         this.hideSave = true;
-        this.savingKernelDatas = false;                
+        this.kernel = this.kernelEdit;
+        await this.$http.post(this.$store.kernelHost + 'info/config', this.kernel)
+        this.hideSave = false;
+        this.saving = false;                
+        this.cancel();
+        this.hideAlert();
       },
+      
       register(){
         let errors = ""
-        if(!this.apiProtocol) errors += "Informe o protocolo do endereço da nuvem."
-        else if(!this.apiAddress) errors += "Informe endereço da nuvem."
+        if(!this.kernel.apiAddressProtocol) errors += "Informe o protocolo do endereço da nuvem."
+        else if(!this.kernel.apiAddress) errors += "Informe endereço da nuvem."
         else if(!this.kernelName) errors += "Informe nome do kernel."
         
         if(errors != "") this.showError(errors, 'mdi-alert')
         else{
-          this.hideError()
-          this.$localStorage.set('apiProtocol', this.apiProtocol);
-          this.$localStorage.set('apiAddress', this.apiAddress);
+          this.hideAlert()
+          this.$localStorage.set('apiProtocol', this.kernel.apiAddressProtocol);
+          this.$localStorage.set('apiAddress', this.kernel.apiAddress);
 
           this.sendingRegister = true;
-          this.$http.post(this.apiProtocol + this.apiAddress + 'devices-kernel/', {
+          this.$http.post(this.kernel.apiAddressProtocol + this.kernel.apiAddress + 'devices-kernel/', {
               mac: this.macaddress,
               name: this.kernelName
           })
           .then(
             response => {
-              this.registerStatus = this.homologingMessage
+              this.registerStatus = this.HOMOLOGING
               this.sendingRegister = false
             },
             responseError => { console.log(responseError); this.showError("Erro ao realizar solicitação de registro"); this.sendingRegister = false },
@@ -196,9 +289,40 @@
           .catch(e => { console.log(e); this.showError("Erro ao realizar solicitação de registro"); this.sendingRegister = false })
         }
       },
+
+      /**
+      * Método que consulta o status da solicitação do registro do kernel na API Aplication.
+      * Realiza uma requisição HTTP GET para a Api Application para ver o status da solitação.
+      *
+      * @returns {String} - status da solicitação de registro do kernel.
+      *
+      */
+      async getRegisterStatus(){
+       
+       let response;
+
+        try {
+          response = await this.$http.get(this.kernel.apiAddressProtocol + this.kernel.apiAddress + 'devices-kernel/status/' + this.macaddress, {timeout: 3000})
+        } catch (error) {
+          console.log("Falha ao consultar status de solicitação de registro na API: " + error);
+          this.registerStatus = this.API_NOT_ONLINE;
+          throw "Falha ao consultar status de solicitação de registro na nuvem. A nuvem pode estar temporariamente fora do ar.";
+        }
+
+        if(!response.data){
+          this.registerStatus = this.NOT_REGISTERED
+        }else if(response.data.enable){ 
+          this.registerStatus = this.HOMOLOGED
+          this.registerEnabled = true
+        }
+        else {
+          this.registerStatus = this.HOMOLOGING
+        }
+        return this.registerStatus
+      },
       getToken(){
         this.gettingToken = true;
-        this.$http.post(`${this.apiProtocol + this.apiAddress}devices-kernel/authenticate`, { mac: this.macaddress }).then(response => {
+        this.$http.post(`${this.kernel.apiAddressProtocol + this.kernel.apiAddress}devices-kernel/authenticate`, { mac: this.macaddress }).then(response => {
           this.gettingToken = false;
           this.token = response.data.token
           this.$localStorage.set('token', this.token);          
@@ -209,7 +333,7 @@
       },
       async getTokenStatus(){
         try {
-          let response = await this.$http.post(`${this.apiProtocol + this.apiAddress}devices-kernel/verify-token`, { kernelMac: this.macaddress, token: this.$localStorage.get('token') })
+          let response = await this.$http.post(`${this.kernel.apiAddressProtocol + this.kernel.apiAddress}devices-kernel/verify-token`, { kernelMac: this.macaddress, token: this.$localStorage.get('token') })
           if(response) this.tokenStatus = "Token válido"
           return true;
         } catch (error) {
@@ -228,38 +352,53 @@
         let response = await this.$http.get(this.$store.kernelHost + 'info/is-online')
         this.isOnline = response.data.isOnline
         if(!this.isOnline) {
-          this.showError('Este dispositivo não possui conexão com a internet.', 'mdi-alert')
+          this.showWarning('A camada kernel do Bigbox não possui conexão com a internet.', 'mdi-alert')
           throw 'Este dispositivo não possui conexão com a internet.'
         }
         return this.isOnline;
       },
-      async getRegisterStatus(){
-        let response = await this.$http.get(this.apiProtocol + this.apiAddress + 'devices-kernel/status/' + this.macaddress)
-        if(response.data.enable){ 
-          this.registerStatus = this.homologedMessage
-          this.registerEnabled = true
+      async getKernelConfigs(){
+        let response = await this.$http.get(this.$store.kernelHost + 'info/config')
+        let result = response.data;
+
+        if(!result) this.showError('Falha ao carregar configurações do Bigbox.', 'mdi-alert')
+
+        if(!result.config && result.err){
+          this.showWarning('O Bigbox pode estar sendo iniciado pela primeira vez agora. Por favor, preencha os Dados do Kernel e do Endereço da Nuvem', 'mdi-alert')
+        }else{
+          this.kernel = result.config;
+          if(!this.kernel.apiAddress || !this.kernel.apiAddressProtocol)
+            this.showWarning('Os dados do Endereço da Nuvem não estão completos. Por favor, complete-os');
         }
-        else {
-          this.registerStatus = this.homologingMessage
+      },
+      async isKenelRunning(){
+        let response = await this.$http.get(this.$store.kernelHost, {timeout: 3000})
+        let result = response.data;
+        if(!result) {
+          return false;
         }
-        return this.registerStatus
+        return true;
       }
     },
     async mounted (){
-      this.apiProtocol = this.$localStorage.get('apiProtocol')
-      this.apiAddress = this.$localStorage.get('apiAddress')
-      this.kernelName = this.$localStorage.get('kernelName')
-      this.token = this.$localStorage.get('token')
+      try {
+        if(!(await this.isKenelRunning()));
+      } catch (error) {
+        this.showError('Falha ao conectar com o kernel Bigbox. Por favor verifique se o kernel está ligado.', 'mdi-alert')
+        this.loadingPage = false;
+        return;
+      }
 
       try {
+        await this.getKernelConfigs()
         await this.getIsOnline()
         await this.getMacAddress()
         await this.getRegisterStatus()
-        await this.getTokenStatus();
+        // await this.getTokenStatus();
         this.loadingPage = false
       } catch (error) {
         this.showError(error, 'mdi-alert')        
-        throw error
+        this.loadingPage = false
       }
     }
   }
