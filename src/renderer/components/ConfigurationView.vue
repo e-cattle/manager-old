@@ -165,9 +165,6 @@
                   Renovar token
                 </v-btn>
               </div>
-              <div v-else>
-                Este kernel pode não estar cadastrado ou homologado na nuvem.
-              </div>
             </v-flex>
           </v-layout>
         </v-container>
@@ -221,10 +218,10 @@
         return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.NOT_REGISTERED ? true : false
       },
       canGenerateToken(){
-        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && !this.token ? true : false
+        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && !this.kernel.token ? true : false
       },
       canRenewToken(){
-        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && this.token ? true : false
+        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && this.kernel.token ? true : false
       },
       showError(errors, icon){
         this.alert = {show: true, message: errors, icon: icon||'mdi-alert'}
@@ -251,15 +248,26 @@
         this.editingKernelDatas = false;
         this.editingApiDatas = false;
       },
+
+      /**
+      * Método que envia uma requisição POST para o Kernel com os dados de configuração.
+      */
       async save(){
         this.saving = true;
         this.hideSave = true;
         this.kernel = this.kernelEdit;
-        await this.$http.post(this.$store.kernelHost + 'info/config', this.kernel)
+        try {
+          let response = await this.$http.post(this.$store.kernelHost + 'info/config', this.kernel);
+          if(response.data.kernel) this.kernel = response.data.kernel;
+          this.hideAlert();
+        } catch (error) {
+          console.log("Erro ao salvar configurações do kernel: " + error);
+          this.showError("Erro ao salvar configurações do Bigbox, tente novamente mais tarde.");
+        }
         this.hideSave = false;
         this.saving = false;                
         this.cancel();
-        this.hideAlert();
+        this.kernelEdit = {};
       },
       
       register(){
@@ -320,34 +328,50 @@
         }
         return this.registerStatus
       },
-      getToken(){
+
+      /**
+      * Método que faz uma requisição para a API Application solicitando uma renovação de token ou um novo token.
+      */
+      async getToken(){
         this.gettingToken = true;
-        this.$http.post(`${this.kernel.apiAddressProtocol + this.kernel.apiAddress}devices-kernel/authenticate`, { mac: this.macaddress }).then(response => {
+        try {
+          let response = await this.$http.post(`${this.kernel.apiAddressProtocol + this.kernel.apiAddress}devices-kernel/authenticate`, { mac: this.macaddress });
           this.gettingToken = false;
-          this.token = response.data.token
-          this.$localStorage.set('token', this.token);          
-        }, response => {
+          this.kernelEdit = this.kernel;
+          this.kernelEdit.token = response.data.token;
+          this.save();
+        } catch (error) {
+          console.log("Erro ao solicitar token à API: " + error);
           this.showError("Falha ao obter o token. Este kernel pode não estar registrado ou homologado na nuvem")
           this.gettingToken = false;
-        })
+        }
       },
+
+      /**
+      * Método que faz uma requisição para a API Application solicitando o status atual do token que o kernel possui.
+      * 
+      * @returns {Boolean} - true: se o token estiver válido, false: se o token estiver inválido 
+      *
+      */
       async getTokenStatus(){
         try {
-          let response = await this.$http.post(`${this.kernel.apiAddressProtocol + this.kernel.apiAddress}devices-kernel/verify-token`, { kernelMac: this.macaddress, token: this.$localStorage.get('token') })
+          let response = await this.$http.post(`${this.kernel.apiAddressProtocol + this.kernel.apiAddress}devices-kernel/verify-token`, { kernelMac: this.macaddress, token: this.kernel.token})
           if(response) this.tokenStatus = "Token válido"
           return true;
         } catch (error) {
-          this.showError("Este token está inválido, por favor renove-o.")
+          this.showWarning("Este token está inválido, por favor renove-o.")
           this.tokenStatus = "Token inválido"
           console.log(error)
           return false;
         }
       },
+
       async getMacAddress(){
         let response = await await this.$http.get(this.$store.kernelHost + 'info/macaddress')
         this.macaddress = response.data.mac
         return this.macaddress
       },
+
       async getIsOnline(){
         let response = await this.$http.get(this.$store.kernelHost + 'info/is-online')
         this.isOnline = response.data.isOnline
@@ -357,6 +381,7 @@
         }
         return this.isOnline;
       },
+
       async getKernelConfigs(){
         let response = await this.$http.get(this.$store.kernelHost + 'info/config')
         let result = response.data;
@@ -371,6 +396,7 @@
             this.showWarning('Os dados do Endereço da Nuvem não estão completos. Por favor, complete-os');
         }
       },
+
       async isKenelRunning(){
         let response = await this.$http.get(this.$store.kernelHost, {timeout: 3000})
         let result = response.data;
@@ -380,6 +406,7 @@
         return true;
       }
     },
+
     async mounted (){
       try {
         if(!(await this.isKenelRunning()));
@@ -394,7 +421,7 @@
         await this.getIsOnline()
         await this.getMacAddress()
         await this.getRegisterStatus()
-        // await this.getTokenStatus();
+        await this.getTokenStatus();
         this.loadingPage = false
       } catch (error) {
         this.showError(error, 'mdi-alert')        
