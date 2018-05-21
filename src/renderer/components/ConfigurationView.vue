@@ -109,19 +109,6 @@
               </div>
             </v-flex>
           </v-layout>
-          <v-layout row>
-            <v-flex xs12>
-              <div class="text-xs-center" v-if="canSendRegister()">
-                 <v-btn
-                  :loading="sendingRegister"
-                  @click="register()"
-                  :disabled="sendingRegister || !isOnline"
-                >
-                  Solicitar registro
-                </v-btn>
-              </div>
-            </v-flex>
-          </v-layout>
         </v-container>
       </v-card>
     </v-flex>
@@ -147,6 +134,19 @@
             <v-flex class="truncate-text" xs4>
               <span v-if="kernel && kernel.token">{{tokenStatus}}</span>
               <span v-else>Este kernel ainda não possui token.</span>
+            </v-flex>
+          </v-layout>
+          <v-layout row>
+            <v-flex xs12>
+              <div class="text-xs-center" v-if="canSendRegister()">
+                 <v-btn
+                  :loading="sendingRegister"
+                  @click="register()"
+                  :disabled="sendingRegister || !isOnline"
+                >
+                  Solicitar registro
+                </v-btn>
+              </div>
             </v-flex>
           </v-layout>
           <v-layout row>
@@ -215,13 +215,13 @@
       },
 
       canSendRegister(){
-        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.NOT_REGISTERED ? true : false
+        return this.registerStatus == this.NOT_REGISTERED ? true : false
       },
       canGenerateToken(){
-        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && !this.kernel.token ? true : false
+        return this.registerStatus == this.HOMOLOGED && !this.kernel.token ? true : false
       },
       canRenewToken(){
-        return this.registerStatus != this.API_NOT_ONLINE && this.registerStatus == this.HOMOLOGED && this.kernel.token ? true : false
+        return this.registerStatus == this.HOMOLOGED && this.kernel.token ? true : false
       },
       showError(errors, icon){
         this.alert = {show: true, message: errors, icon: icon||'mdi-alert'}
@@ -270,31 +270,32 @@
         this.kernelEdit = {};
       },
       
-      register(){
+      /**
+      * Envia uma requisição HTTP post para o endpoint "/devices-kernel" da API Application solicitando o registro do kernel
+      */
+      async register(){
         let errors = ""
         if(!this.kernel.apiAddressProtocol) errors += "Informe o protocolo do endereço da nuvem."
         else if(!this.kernel.apiAddress) errors += "Informe endereço da nuvem."
-        else if(!this.kernelName) errors += "Informe nome do kernel."
+        else if(!this.kernel.name) errors += "Informe nome do kernel."
         
         if(errors != "") this.showError(errors, 'mdi-alert')
+        
         else{
           this.hideAlert()
-          this.$localStorage.set('apiProtocol', this.kernel.apiAddressProtocol);
-          this.$localStorage.set('apiAddress', this.kernel.apiAddress);
-
           this.sendingRegister = true;
-          this.$http.post(this.kernel.apiAddressProtocol + this.kernel.apiAddress + 'devices-kernel/', {
-              mac: this.macaddress,
-              name: this.kernelName
-          })
-          .then(
-            response => {
-              this.registerStatus = this.HOMOLOGING
-              this.sendingRegister = false
-            },
-            responseError => { console.log(responseError); this.showError("Erro ao realizar solicitação de registro"); this.sendingRegister = false },
-          )
-          .catch(e => { console.log(e); this.showError("Erro ao realizar solicitação de registro"); this.sendingRegister = false })
+
+          try {
+            let response = await this.$http.post(this.kernel.apiAddressProtocol + this.kernel.apiAddress + 'devices-kernel/', {
+                mac: this.macaddress,
+                name: this.kernel.name
+            });
+            this.sendingRegister = false;
+            this.getRegisterStatus();
+          } catch (error) {
+            console.log(responseError); this.showError("Erro ao realizar solicitação de registro"); 
+            this.sendingRegister = false;
+          }
         }
       },
 
@@ -312,21 +313,26 @@
         try {
           response = await this.$http.get(this.kernel.apiAddressProtocol + this.kernel.apiAddress + 'devices-kernel/status/' + this.macaddress, {timeout: 3000})
         } catch (error) {
-          console.log("Falha ao consultar status de solicitação de registro na API: " + error);
-          this.registerStatus = this.API_NOT_ONLINE;
-          throw "Falha ao consultar status de solicitação de registro na nuvem. A nuvem pode estar temporariamente fora do ar.";
+          if(error.response && error.response.status == 404){
+            response = error.response;
+          }else{
+            console.log("Falha ao consultar status de solicitação de registro na API: " + error);
+            this.registerStatus = this.API_NOT_ONLINE;
+            throw "Falha ao consultar status de solicitação de registro na nuvem. A nuvem pode estar temporariamente fora do ar.";
+          }
         }
 
-        if(!response.data){
-          this.registerStatus = this.NOT_REGISTERED
+        if(!response.data || !response.data._id){
+          this.registerStatus = this.NOT_REGISTERED;
+          this.showWarning("O kernel Bigbox não está registrado na nuvem. Para que os dados possam ser sincronizados você deve realizar a solicitação de registro.")
         }else if(response.data.enable){ 
-          this.registerStatus = this.HOMOLOGED
-          this.registerEnabled = true
+          this.registerStatus = this.HOMOLOGED;
+          this.registerEnabled = true;
         }
         else {
-          this.registerStatus = this.HOMOLOGING
+          this.registerStatus = this.HOMOLOGING;
         }
-        return this.registerStatus
+        return this.registerStatus;
       },
 
       /**
@@ -421,7 +427,7 @@
         await this.getIsOnline()
         await this.getMacAddress()
         await this.getRegisterStatus()
-        await this.getTokenStatus();
+        if(this.registerStatus != this.NOT_REGISTERED) await this.getTokenStatus();
         this.loadingPage = false
       } catch (error) {
         this.showError(error, 'mdi-alert')        
