@@ -36,6 +36,8 @@ export default {
       registerStatus: "",
       registerEnabled: "",
       message: '',
+      kernel: {},
+      isKernelComplete: false,
       isSyncing: false
     }
   },
@@ -46,10 +48,12 @@ export default {
     hideError(){
       this.error = {show: false, message: "", icon: ""}
     },
+
     //Recupera MAC da API-Kernel
     async getMacAddress(){
       return await this.$http.get(this.$store.kernelHost + 'info/macaddress')
     },
+
     //Faz Sincronismo dos Devices com API-Application
     async syncDevices(){ 
       this.message += "Fazendo backup dos dispositivos...<br>"          
@@ -57,30 +61,17 @@ export default {
         //Todos dispositivos não sincronizados
         let response = await this.$http.get(this.$store.kernelHost + 'devices/sync')
         if(!response.data) {
-          return this.message += "Falha ao sincronizar dispositivos" 
+          return this.message += "Falha ao sincronizar dispositivos<br>" 
         }else{
-          this.message += "Enviando dispositivos para nuvem...<br>"          
-          let devices = response.data;
-          if(devices.length <= 0) { this.message += "Todos os dispositivos sincronizados.<br>"; this.isSyncing = false }
-          for (let i = 0; i < devices.length; i++) {
-            let device = devices[i];
-            //Vincula cada device com seu Kernel pelo Mac 
-            device.kernelMac = this.macaddress;
-            this.message += `Enviando dispositivo: <strong>${device.name}</strong>...<br>`
-            //Post para API application, recebe  a data de sincronismo como resposta
-            let response = await this.$http.post(`${this.apiProtocol}${this.apiAddress}devices-sync/`,  { token: this.token, device: device, kernelMac: this.macaddress })
-            
-            if(!response.data.syncedAt) this.message += "Erro ao sincronizar dispositivo.<br>"
-            //Altera o status do device apra  para sincronizado
-            else this.$http.get(`${this.$store.kernelHost}devices/synced/${device.mac}`)
-          }
+          return this.message += "Dispositivos sincronizados<br>" 
           return;
         }
       } catch(err) {
-          this.message += "Erro ao sincronizar dispositivos"
-          throw err
+          this.message += "Erro ao sincronizar dispositivos";
+          throw err;
       }
     },
+
     async syncMeasures(){
       this.message += "Fazendo backup dos dados sensoriais...<br>"          
       try{
@@ -105,6 +96,7 @@ export default {
         throw err
       }
     },
+
     async isKernelOnline(){
       try{
         let response = await this.$http.get(this.$store.kernelHost + 'info/is-online')
@@ -116,24 +108,43 @@ export default {
         this.showError('Este dispositivo não possui conexão com a internet.', 'mdi-alert')
       }
     },
+
     async sync () {
       this.isSyncing = true
       this.message = 'Conectando com a nuvem...<br>'
       try{
         let response = await this.getMacAddress()
         this.macaddress = response.data.mac
+        await this.getKernelConfigs();
         await this.getRegisterStatus()
         await this.syncDevices()
-        await this.syncMeasures()
+        // await this.syncMeasures()
         this.isSyncing = false;
         this.message += "Todos os dados sincronizados"
       }catch(e){
         throw e
       }
     },
+
+    async getKernelConfigs(){
+        let response = await this.$http.get(this.$store.kernelHost + 'info/config')
+        let result = response.data;
+
+        if(!result) this.message += 'Falha ao carregar configurações do Bigbox.';
+
+        if(!result.config && result.err){
+          this.message += 'O Bigbox pode estar sendo iniciado pela primeira vez agora. Por favor, preencha os Dados do Kernel e do Endereço da Nuvem';
+        }else{
+          this.kernel = result.config;
+          if(!this.kernel.apiAddress || !this.kernel.apiAddressProtocol)
+            this.message += 'Os dados do Endereço da Nuvem não estão completos. Por favor, complete-os';
+          else this.isKernelComplete = true;
+        }
+      },
+
     async getRegisterStatus(){
       try {
-        let response = await this.$http.get(this.apiProtocol + this.apiAddress + 'devices-kernel/status/' + this.macaddress)
+        let response = await this.$http.get(this.kernel.apiAddressProtocol + this.kernel.apiAddress + 'devices-kernel/status/' + this.macaddress)
         if(response.data.enable) {
           this.registerStatus = "Registrado"
           this.registerEnabled = true
@@ -157,7 +168,7 @@ export default {
     this.apiProtocol = this.$localStorage.get('apiProtocol')
     this.apiAddress = this.$localStorage.get('apiAddress')
     this.token = this.$localStorage.get('token')
-    this.isKernelOnline()
+    this.isKernelOnline();
   }
 }
 </script>
