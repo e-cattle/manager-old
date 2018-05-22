@@ -10,6 +10,11 @@
     </v-flex>
     <v-flex>
       <h1 class="text-xs-center headline">Dispositivos</h1>
+      <v-flex class="text-xs-center">
+        <v-btn flat icon :class="{sync: updating}" @click="findAll()">
+          <v-icon>sync</v-icon>
+        </v-btn>
+      </v-flex>
       <br>
       <h2 class="text-xs-center subheading" v-if="!devices || devices.length<=0">Não há dispositivos registrados no momento.</h2>
        <v-list v-if="devices && devices.length>0">
@@ -140,6 +145,7 @@ export default {
         title: 'Devices',
         devices: [],
         deviceToShow: {},
+        updating: false,
         dialog: false,
         dialogMenuItens: [
             {
@@ -156,8 +162,10 @@ export default {
       this.error = {show: false, message: "", icon: ""}
     },
     findAll () {
+      this.updating = true;
       this.$http.get('http://localhost:3000/devices/').then(response => {
-        this.devices = response.data
+        this.devices = response.data;
+        this.updating = false;
       }, response => {
         console.log('Erro ao buscar devices: ' + response)
       })
@@ -220,3 +228,15 @@ export default {
     }
 }
 </script>
+<style scoped>
+.sync{
+    animation: sync-animation;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+  }
+  @keyframes sync-animation {
+    0% { transform: rotate(0deg)}
+    75% { transform: rotate(360deg)}
+    100% { transform: rotate(360deg)}
+  }
+</style>

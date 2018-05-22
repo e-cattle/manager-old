@@ -115,6 +115,9 @@
 
     <v-flex xs12 class="mt-4">
       <v-card>
+        <v-btn flat icon @click="getRegisterStatus()">
+          <v-icon>sync</v-icon>
+        </v-btn>
         <v-card-title class="headline">
           Acesso a nuvem
         </v-card-title>
