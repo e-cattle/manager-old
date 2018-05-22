@@ -346,6 +346,7 @@
           this.kernelEdit = this.kernel;
           this.kernelEdit.token = response.data.token;
           this.save();
+          this.tokenStatus = "Token válido";
         } catch (error) {
           console.log("Erro ao solicitar token à API: " + error);
           this.showError("Falha ao obter o token. Este kernel pode não estar registrado ou homologado na nuvem")
